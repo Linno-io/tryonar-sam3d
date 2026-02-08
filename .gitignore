@@ -52,12 +52,6 @@ htmlcov/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Project-specific directories
-uploads/*
-!uploads/.gitkeep
-outputs/*
-!outputs/.gitkeep
-
 # Environment variables
 .env
 .env.local
