@@ -28,7 +28,7 @@ else
 fi
 
 echo "--- Python deps ---"
-python -m pip install -U pip
+python -m pip install -U pip setuptools wheel
 export PIP_EXTRA_INDEX_URL="https://pypi.ngc.nvidia.com https://download.pytorch.org/whl/cu121"
 export PIP_FIND_LINKS="https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html"
 
@@ -39,7 +39,8 @@ python -m pip install \
   torchaudio==2.5.1+cu121 \
   --index-url https://download.pytorch.org/whl/cu121
 
-python -m pip install -e "$SAM3D_REPO[dev,p3d,inference]"
+export PIP_NO_BUILD_ISOLATION=1
+python -m pip install --no-build-isolation -e "$SAM3D_REPO[dev,p3d,inference]"
 
 if [[ -f "$SAM3D_REPO/patching/hydra" ]]; then
   chmod +x "$SAM3D_REPO/patching/hydra"
