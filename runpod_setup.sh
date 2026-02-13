@@ -28,7 +28,7 @@ else
 fi
 
 echo "--- Python deps ---"
-python -m pip install -U pip setuptools wheel
+python -m pip install -U pip setuptools wheel hatchling
 export PIP_EXTRA_INDEX_URL="https://pypi.ngc.nvidia.com https://download.pytorch.org/whl/cu121"
 export PIP_FIND_LINKS="https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html"
 
