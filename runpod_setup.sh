@@ -29,15 +29,15 @@ fi
 
 echo "--- Python deps ---"
 python -m pip install -U pip
-export PIP_EXTRA_INDEX_URL="https://pypi.ngc.nvidia.com https://download.pytorch.org/whl/cu124"
+export PIP_EXTRA_INDEX_URL="https://pypi.ngc.nvidia.com https://download.pytorch.org/whl/cu121"
 export PIP_FIND_LINKS="https://nvidia-kaolin.s3.us-east-2.amazonaws.com/torch-2.5.1_cu121.html"
 
 echo "--- Install PyTorch (required for gsplat build) ---"
 python -m pip install \
-  torch==2.4.0+cu124 \
-  torchvision==0.19.0+cu124 \
-  torchaudio==2.4.0+cu124 \
-  --index-url https://download.pytorch.org/whl/cu124
+  torch==2.5.1+cu121 \
+  torchvision==0.20.1+cu121 \
+  torchaudio==2.5.1+cu121 \
+  --index-url https://download.pytorch.org/whl/cu121
 
 python -m pip install -e "$SAM3D_REPO[dev,p3d,inference]"
 
