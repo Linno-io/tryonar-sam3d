@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import inspect
 from typing import Optional
 from pathlib import Path
 import torch
@@ -9,8 +10,34 @@ import numpy as np
 from rembg import remove
 import trimesh
 
-# Add parent directory to path to allow importing from the root of the repo (where SAM3D is cloned)
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+BASE_DIR = Path(os.getenv("APP_ROOT", Path(__file__).resolve().parents[1]))
+
+def resolve_sam3d_repo() -> Optional[Path]:
+    """
+    Resolve the SAM3D repo path for manual installs.
+    Order:
+      1) SAM3D_REPO env
+      2) ../sam-3d-objects relative to this project
+      3) ./sam-3d-objects in cwd
+      4) /workspace/sam-3d-objects (RunPod default)
+    """
+    env_path = os.getenv("SAM3D_REPO")
+    candidates = [
+        Path(env_path) if env_path else None,
+        BASE_DIR.parent / "sam-3d-objects",
+        Path.cwd() / "sam-3d-objects",
+        Path("/workspace/sam-3d-objects"),
+    ]
+    for candidate in candidates:
+        if candidate and candidate.exists():
+            return candidate.resolve()
+    return None
+
+SAM3D_REPO = resolve_sam3d_repo()
+if SAM3D_REPO:
+    sys.path.append(str(SAM3D_REPO))
+else:
+    logging.warning("SAM3D repo not found. Set SAM3D_REPO or place sam-3d-objects next to this project.")
 
 try:
     # Assuming the inference script/module is available in the root
@@ -28,7 +55,7 @@ logger = logging.getLogger(__name__)
 class InferenceEngine:
     def __init__(self):
         self.model = None
-        self.output_dir = Path(os.getenv("OUTPUT_DIR", "/app/outputs"))
+        self.output_dir = Path(os.getenv("OUTPUT_DIR", str(BASE_DIR / "outputs")))
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.load_model()
 
@@ -38,8 +65,15 @@ class InferenceEngine:
             return
 
         logger.info("Loading SAM3D Model...")
-        # Config path as per PRD/Docker setup
-        config_path = "/app/checkpoints/hf/pipeline.yaml" 
+        # Config path can be overridden via env; otherwise resolve from SAM3D repo
+        env_config = os.getenv("SAM3D_CONFIG")
+        tag = os.getenv("SAM3D_TAG", "hf")
+        if env_config:
+            config_path = env_config
+        elif SAM3D_REPO:
+            config_path = str(SAM3D_REPO / "checkpoints" / tag / "pipeline.yaml")
+        else:
+            config_path = str(BASE_DIR / "checkpoints" / tag / "pipeline.yaml")
         
         # Check if config exists, if not use a dummy if in dev mode
         if not os.path.exists(config_path):
@@ -118,14 +152,24 @@ class InferenceEngine:
             # "Invoke generate_single_object()... Convert ... into .glb"
             
             # Let's assume generate_single_object returns a dictionary or object we can save.
-            result = self.model.generate_single_object(rgb, mask)
+            generate_fn = getattr(self.model, "generate_single_object", None)
+            if generate_fn is None:
+                raise RuntimeError("SAM3D model does not expose generate_single_object")
+
+            sig = inspect.signature(generate_fn)
+            if "output_path" in sig.parameters:
+                result = generate_fn(rgb, mask, output_path=str(output_glb_path))
+            else:
+                result = generate_fn(rgb, mask)
             
             # Implementation of "Convert to .glb"
             # If result is a mesh (trimesh or pytorch3d), export it.
             # If result is paths to .obj / .ply, load and export.
             
             # Mocking the export logic if we don't know the exact return type:
-            if hasattr(result, 'export'):
+            if output_glb_path.exists():
+                pass
+            elif hasattr(result, 'export'):
                 result.export(str(output_glb_path))
             elif isinstance(result, dict) and 'mesh' in result:
                  # Ensure it's a trimesh object

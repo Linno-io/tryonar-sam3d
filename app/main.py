@@ -13,8 +13,9 @@ from fastapi.staticfiles import StaticFiles
 from app.engine import InferenceEngine
 
 # Configuration
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "/tmp/uploads"))
-OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/app/outputs"))
+BASE_DIR = Path(os.getenv("APP_ROOT", Path(__file__).resolve().parents[1]))
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", str(BASE_DIR / "uploads")))
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(BASE_DIR / "outputs")))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -36,6 +36,37 @@ Map port 8000 and enable GPU access.
 docker run --gpus all -p 8000:8000 sam3d-backend
 ```
 
+## 🚀 RunPod Manual Install (No Docker)
+
+Use this when you want to set up directly on a RunPod GPU instance.
+
+### 1. Set Hugging Face Token
+
+```bash
+export HF_TOKEN=hf_your_token_here
+```
+
+### 2. Run setup script
+
+```bash
+bash runpod_setup.sh
+```
+
+### 3. Start the API
+
+```bash
+bash runpod_start.sh
+```
+
+The API will be available on port 8000.
+
+### Optional environment overrides
+
+- `SAM3D_REPO` (default: /workspace/sam-3d-objects)
+- `SAM3D_TAG` (default: hf)
+- `SAM3D_CONFIG` (full path to pipeline.yaml)
+- `APP_ROOT` (defaults to this repo root)
+
 ## 🔌 API Usage
 
 ### `POST /api/inference`
